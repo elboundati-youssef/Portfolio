@@ -1,54 +1,71 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize all features
+    // Initialisation de toutes les fonctionnalités au chargement de la page
     initNavbar();
     initTypingEffect();
     initOrbitAnimations();
     initSunPhotoModal();
     initSmoothScroll();
     initSectionAnimations();
+    initCvModal(); // Nouvelle fonction pour gérer le popup CV
 });
 
+// --- 1. NAVIGATION & ACTIVE LINKS ---
 function initNavbar() {
     const hamburger = document.getElementById('hamburger');
     const navMenu = document.getElementById('nav-menu');
     const navLinks = document.querySelectorAll('.nav-link');
+    const sections = document.querySelectorAll('section');
 
-    hamburger.addEventListener('click', () => {
-        hamburger.classList.toggle('active');
-        navMenu.classList.toggle('active');
-    });
+    // ... (le code du hamburger reste le même) ...
+    if (hamburger && navMenu) {
+        hamburger.addEventListener('click', () => {
+            hamburger.classList.toggle('active');
+            navMenu.classList.toggle('active');
+        });
+    }
 
     navLinks.forEach(link => {
         link.addEventListener('click', () => {
-            hamburger.classList.remove('active');
-            navMenu.classList.remove('active');
+            if (hamburger && navMenu) {
+                hamburger.classList.remove('active');
+                navMenu.classList.remove('active');
+            }
         });
     });
 
-    const sections = document.querySelectorAll('section');
+    // CORRECTION ICI : Options ajustées pour les longues sections
+    const observerOptions = {
+        // On baisse le seuil à 0.1 (10%) pour que les longues sections soient détectées
+        threshold: 0.1, 
+        // On décale la zone de détection vers le haut pour que le lien change dès que la section arrive
+        rootMargin: '-20% 0px -50% 0px' 
+    };
+
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
-                
-                navLinks.forEach(link => link.classList.remove('active'));
-                
-                
-                const activeLink = document.querySelector(`a[href="#${entry.target.id}"]`);
-                if (activeLink) {
-                    activeLink.classList.add('active');
+                // On vérifie d'abord que l'ID existe bien pour éviter les erreurs
+                if(entry.target.id) {
+                    navLinks.forEach(link => {
+                        link.classList.remove('active');
+                        // Vérifie si le lien correspond exactement à la section
+                        if(link.getAttribute('href') === `#${entry.target.id}`) {
+                            link.classList.add('active');
+                        }
+                    });
                 }
             }
         });
-    }, {
-        threshold: 0.3,
-        rootMargin: '-100px 0px -100px 0px'
-    });
+    }, observerOptions);
     
     sections.forEach(section => observer.observe(section));
 }
 
+// --- 2. TYPING EFFECT (Texte qui s'écrit tout seul) ---
 function initTypingEffect() {
     const typingText = document.getElementById('typing-text');
+    if (!typingText) return;
+
     const phrases = [
         'Web Developer',
         'Back-End', 
@@ -68,27 +85,27 @@ function initTypingEffect() {
         const currentPhrase = phrases[currentPhraseIndex];
         
         if (isDeleting) {
-            // Deleting characters
+            // Effacer
             typingText.textContent = currentPhrase.substring(0, currentCharIndex - 1);
             currentCharIndex--;
-            typingSpeed = 50; // Faster when deleting
+            typingSpeed = 50; 
         } else {
-            // Typing characters
+            // Écrire
             typingText.textContent = currentPhrase.substring(0, currentCharIndex + 1);
             currentCharIndex++;
-            typingSpeed = 100; // Normal typing speed
+            typingSpeed = 100; 
         }
         
-        // When word is complete
+        // Mot complet écrit
         if (!isDeleting && currentCharIndex === currentPhrase.length) {
             isDeleting = true;
-            typingSpeed = 2000; // Pause before deleting
+            typingSpeed = 2000; // Pause avant d'effacer
         } 
-        // When word is completely deleted
+        // Mot complet effacé
         else if (isDeleting && currentCharIndex === 0) {
             isDeleting = false;
             currentPhraseIndex = (currentPhraseIndex + 1) % phrases.length;
-            typingSpeed = 500; // Pause before next word
+            typingSpeed = 500; // Pause avant le mot suivant
         }
         
         setTimeout(typeEffect, typingSpeed);
@@ -97,21 +114,21 @@ function initTypingEffect() {
     typeEffect();
 }
 
-
-
+// --- 3. ANIMATIONS ORBITALES (Icônes qui tournent) ---
 function initOrbitAnimations() {
     const planets = document.querySelectorAll('.random-orbit');
 
     planets.forEach((planet, index) => {
         const startAngle = Math.random() * 360;
-        const radius = 120 + (index * 40);
+        const radius = 120 + (index * 40); // Rayon différent pour chaque icône
 
         const duration = 15 + Math.random() * 15;
         const direction = Math.random() > 0.5 ? 'normal' : 'reverse';
-        const delay = 0;
-
+        
+        // Position initiale
         planet.style.transform = `rotate(${startAngle}deg) translateX(${radius}px) rotate(-${startAngle}deg)`;
 
+        // Création dynamique de l'animation CSS
         const animationName = `orbit${index}`;
         const keyframes = `
             @keyframes ${animationName} {
@@ -129,8 +146,8 @@ function initOrbitAnimations() {
         document.head.appendChild(styleSheet);
 
         planet.style.animation = `${animationName} ${duration}s linear infinite ${direction}`;
-        planet.style.animationDelay = `${delay}s`;
 
+        // Pause au survol de la souris
         planet.addEventListener('mouseenter', () => {
             planet.style.animationPlayState = 'paused';
         });
@@ -141,6 +158,7 @@ function initOrbitAnimations() {
     });
 }
 
+// --- 4. MODAL PHOTO SOLEIL (Easter Egg) ---
 function initSunPhotoModal() {
     const sun = document.querySelector('.sun-core');
     const modal = document.getElementById('photo-modal');
@@ -163,15 +181,10 @@ function initSunPhotoModal() {
                 modal.style.display = 'none';
             }
         });
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && modal.style.display === 'block') {
-                modal.style.display = 'none';
-            }
-        });
     }
 }
 
+// --- 5. SMOOTH SCROLL (Défilement doux) ---
 function initSmoothScroll() {
     const navLinks = document.querySelectorAll('a[href^="#"]');
 
@@ -183,7 +196,7 @@ function initSmoothScroll() {
             const targetElement = document.getElementById(targetId);
 
             if (targetElement) {
-                const headerOffset = 80;
+                const headerOffset = 80; // Hauteur de la navbar fixe
                 const elementPosition = targetElement.getBoundingClientRect().top;
                 const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
 
@@ -196,6 +209,7 @@ function initSmoothScroll() {
     });
 }
 
+// --- 6. ANIMATIONS D'APPARITION DES SECTIONS ---
 function initSectionAnimations() {
     const elements = document.querySelectorAll('.slide-in-left, .slide-in-right, .slide-in-up');
 
@@ -203,13 +217,14 @@ function initSectionAnimations() {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
                 entry.target.style.opacity = '1';
-                if (entry.target.classList.contains('slide-in-left')) {
-                    entry.target.style.transform = 'translateX(0)';
-                } else if (entry.target.classList.contains('slide-in-right')) {
+                // Reset des transformations pour remettre l'élément à sa place d'origine
+                if (entry.target.classList.contains('slide-in-left') || entry.target.classList.contains('slide-in-right')) {
                     entry.target.style.transform = 'translateX(0)';
                 } else {
                     entry.target.style.transform = 'translateY(0)';
                 }
+                // Optionnel : arrêter d'observer une fois l'animation jouée
+                // elementObserver.unobserve(entry.target); 
             }
         });
     }, {
@@ -218,59 +233,18 @@ function initSectionAnimations() {
     });
 
     elements.forEach(element => elementObserver.observe(element));
-
-    (function() {
-  emailjs.init("hRIrExZN-hwBeR-KS"); // ← ضع المفتاح العام من EmailJS
-})();
-
-document.getElementById("contact-form").addEventListener("submit", function(e) {
-  e.preventDefault();
-
-  emailjs.sendForm("service_zxxk33w", "template_zx6ao9s", this)
-    .then(() => {
-      alert("Dn");
-    }, (error) => {
-      alert("Eror " + JSON.stringify(error));
-    });
-});
-
 }
 
-document.addEventListener('DOMContentLoaded', function () {
-    // Contact Form
-    const form = document.getElementById('contact-form');
-
-    form.addEventListener('submit', function (e) {
-        e.preventDefault();
-
-        emailjs.sendForm(
-            "service_zxxk33w",   // Service ID من EmailJS
-            "template_zx6ao9s",  // Template ID من EmailJS
-            this
-        ).then(
-            () => {
-                alert("✅ Message sent successfully!");
-                form.reset();
-            },
-            (error) => {
-                alert("❌ Failed to send message: " + error.text);
-            }
-        );
-    });
-});
-// =======================
-// MODAL CV (Download Popup)
-// =======================
-
-document.addEventListener('DOMContentLoaded', function () {
+// --- 7. MODAL CV (Téléchargement CV) ---
+function initCvModal() {
     const modal = document.getElementById("cvModal");
     const openBtn = document.getElementById("openCvModal");
     const closeBtn = document.getElementById("closeCvModal");
 
-    if (!modal || !openBtn || !closeBtn) return; // sécurité
+    if (!modal || !openBtn || !closeBtn) return; 
 
     openBtn.addEventListener("click", () => {
-        modal.style.display = "flex";
+        modal.style.display = "flex"; // Utilisation de flex pour centrer si défini en CSS
     });
 
     closeBtn.addEventListener("click", () => {
@@ -282,10 +256,4 @@ document.addEventListener('DOMContentLoaded', function () {
             modal.style.display = "none";
         }
     });
-});
-
-
-
-
-
-
+}
